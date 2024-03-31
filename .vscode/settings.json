@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "cstdint": "cpp",
+        "string": "cpp",
+        "compare": "cpp",
+        "format": "cpp",
+        "task.h": "c",
+        "segger_sysview.h": "c",
+        "freertos.h": "c",
+        "segger_sysview_freertos.h": "c",
+        "exception.h": "c",
+        "timers.h": "c"
+    }
+}

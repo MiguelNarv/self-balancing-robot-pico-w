@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Upload",
+            "type": "shell",
+            "command": "${workspaceFolder}/tools/xpack-openocd-0.12.0-2/bin/openocd.exe",
+            "args": 
+            [
+                "-f",
+                "interface/cmsis-dap.cfg",
+                "-f",
+                "target/rp2040.cfg",
+                "-c",
+                "adapter speed 10000",
+                "-c",
+                "program build/source/source.elf verify reset",
+                "-c",
+                "reset",
+                "-c",
+                "exit"
+            ],
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn":["Cmake build"]
+        },
+        {
+            "label": "Cmake build",
+            "type": "shell",
+            "command": "C:/Program Files/CMake/bin/cmake.exe",
+            "args": 
+            [
+                {"value": "--build ${workspaceFolder}/build", "quoting": "weak"},
+                {"value": "--config Debug", "quoting": "weak"},
+                {"value": "--target all", "quoting": "weak"},
+                {"value": "-j", "quoting": "weak"}
+            ],
+            "group": "build"
+        }
+    ]
+}
