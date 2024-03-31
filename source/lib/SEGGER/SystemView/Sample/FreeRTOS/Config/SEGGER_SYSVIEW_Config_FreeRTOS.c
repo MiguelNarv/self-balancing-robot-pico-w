@@ -63,10 +63,10 @@ extern const SEGGER_SYSVIEW_OS_API SYSVIEW_X_OS_TraceAPI;
 **********************************************************************
 */
 // The application name to be displayed in SystemViewer
-#define SYSVIEW_APP_NAME        "FreeRTOS Demo Application"
+#define SYSVIEW_APP_NAME        "RP2040 Demo"  
 
 // The target device name
-#define SYSVIEW_DEVICE_NAME     "Cortex-M4"
+#define SYSVIEW_DEVICE_NAME     "Cortex-M0+"
 
 // Frequency of the timestamp. Must match SEGGER_SYSVIEW_GET_TIMESTAMP in SEGGER_SYSVIEW_Conf.h
 #define SYSVIEW_TIMESTAMP_FREQ  (configCPU_CLOCK_HZ)
@@ -75,7 +75,12 @@ extern const SEGGER_SYSVIEW_OS_API SYSVIEW_X_OS_TraceAPI;
 #define SYSVIEW_CPU_FREQ        configCPU_CLOCK_HZ
 
 // The lowest RAM address used for IDs (pointers)
-#define SYSVIEW_RAM_BASE        (0x10000000)
+#define SYSVIEW_RAM_BASE        (0x20000000)
+
+#define SCB_ICSR  (*(volatile U32*) (0xE000ED04uL))  // Interrupt Control State Register
+#define SCB_ICSR_PENDSTSET_MASK     (1UL << 26)      // SysTick pending bit
+#define SYST_RVR  (*(volatile U32*) (0xE000E014uL))  // SysTick Reload Value Register
+#define SYST_CVR  (*(volatile U32*) (0xE000E018uL))  // SysTick Current Value Register 
 
 /********************************************************************* 
 *
@@ -100,5 +105,52 @@ void SEGGER_SYSVIEW_Conf(void) {
                       &SYSVIEW_X_OS_TraceAPI, _cbSendSystemDesc);
   SEGGER_SYSVIEW_SetRAMBase(SYSVIEW_RAM_BASE);
 }
+
+/*********************************************************************
+*
+*       SEGGER_SYSVIEW_X_GetTimestamp()
+*
+* Function description
+*   Returns the current timestamp in cycles using the system tick
+*   count and the SysTick counter.
+*   All parameters of the SysTick have to be known and are set via
+*   configuration defines on top of the file.
+*
+* Return value
+*   The current timestamp.
+*
+* Additional information
+*   SEGGER_SYSVIEW_X_GetTimestamp is always called when interrupts are
+*   disabled. Therefore locking here is not required.
+*/
+U32 SEGGER_SYSVIEW_X_GetTimestamp(void) {
+  U32 TickCount;
+  U32 Cycles;
+  U32 CyclesPerTick;
+  //
+  // Get the cycles of the current system tick.
+  // SysTick is down-counting, subtract the current value from the number of cycles per tick.
+  //
+  CyclesPerTick = SYST_RVR + 1;
+  Cycles = (CyclesPerTick - SYST_CVR);
+  //
+
+  // Get the system tick count.
+  //
+  TickCount = SEGGER_SYSVIEW_TickCnt;
+  //
+  // If a SysTick interrupt is pending, re-read timer and adjust result
+  //
+
+  if ((SCB_ICSR & SCB_ICSR_PENDSTSET_MASK) != 0) {
+  Cycles = (CyclesPerTick - SYST_CVR);
+  TickCount++;
+  }
+
+  Cycles += TickCount * CyclesPerTick;
+return Cycles;
+}
+
+
 
 /*************************** End of file ****************************/

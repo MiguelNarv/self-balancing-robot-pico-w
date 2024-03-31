@@ -79,6 +79,18 @@ Additional information:
 **********************************************************************
 */
 
+#define SEGGER_SYSVIEW_GET_TIMESTAMP() SEGGER_SYSVIEW_X_GetTimestamp()
+// number of valid bits low-order delivered by SEGGER_SYSVIEW_X_GetTimestamp()
+#define SEGGER_SYSVIEW_TIMESTAMP_BITS 16
+#define SEGGER_SYSVIEW_GET_INTERRUPT_ID() ((*(U32*)(0xE000ED04)) & 0x3F)
+
+// Lock SysView (nestable)
+#define SEGGER_SYSVIEW_LOCK() SEGGER_RTT_LOCK()
+// Unlock SysView (nestable)
+#define SEGGER_SYSVIEW_UNLOCK() SEGGER_RTT_UNLOCK()
+
+/* 4 kB assigned for trace recording. */
+#define SEGGER_SYSVIEW_RTT_BUFFER_SIZE (4096U * 4)
 
 #endif  // SEGGER_SYSVIEW_CONF_H
 

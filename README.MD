@@ -81,6 +81,8 @@ Additionally you need to define you path to CMake in tasks.json "command", curre
 
 Any DAPLink debugger can be used, tested with LuatOS debugger.
 
+![Debug window](<misc/Debug window.png>)
+
 ### dump_format.py
 Creates the .SVDat required to load for SystemView analysis.
 How to use it:
@@ -116,4 +118,3 @@ git submodule update --init --recursive
 ```
 
 SystemView can be download from this [page](https://www.segger.com/downloads/systemview/). Any update or patch on it needs to be done manually.
-
