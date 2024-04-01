@@ -36,10 +36,12 @@ Modifications:
 ### Notes:
 - FreeRtos config is set for 1 core as SystemView doesn't support multi core yet. If you are not interested in SystemView analysis you can set `#define configNUMBER_OF_CORES                   2` and other configurations accordingly.
 - For SystemView:
+    - It is recommended to add `SEGGER_SYSVIEW_TickCnt++;` at the beggining of xPortSysTickHandler and include `#include "SEGGER_SYSVIEW.h"` under source\lib\FreeRTOS-Kernel\portable\ThirdParty\GCC\RP2040\port.c. Inaccurate timestamps may be recorded if this patch is not applied.
     - The recording buffer can be modified in SEGGER_SYSVIEW_Conf.h, its size has an impact on your system SRAM.
     - If the number of task, interruptions, timers or their occurences increase in your application, the recording buffer will fill faster. This means that tasks with high period of execution won't be recorded unless you decrease the frequency of configTICK_RATE_HZ or increase the buffer size.  
     Error -140 in the application might mean that the buffer overflowed.
     - If tasks are invisible in timeline but visible in trace window go to the last event in timeline and start analysis from there.
+    
 
 
 ## Tools
