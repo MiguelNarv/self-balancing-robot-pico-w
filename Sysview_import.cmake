@@ -5,5 +5,4 @@ target_include_directories(SYSVIEW_PORT
         ${CMAKE_CURRENT_LIST_DIR}/Source/lib/SEGGER/SystemView/Sample/FreeRTOS
         ${CMAKE_CURRENT_LIST_DIR}/Source/lib/SEGGER/SystemView/SEGGER
         ${CMAKE_CURRENT_LIST_DIR}/Source/lib/SEGGER/SystemView/Config
-        ${CMAKE_CURRENT_LIST_DIR}/Source/inc
     )

@@ -9,6 +9,7 @@
         "freertos.h": "c",
         "segger_sysview_freertos.h": "c",
         "exception.h": "c",
-        "timers.h": "c"
+        "timers.h": "c",
+        "stdlib.h": "c"
     }
 }

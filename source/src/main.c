@@ -1,5 +1,7 @@
 #include <pico/stdlib.h>
+#ifdef USE_SYSVIEW
 #include "SEGGER_SYSVIEW_FreeRTOS.h"
+#endif
 #include <FreeRTOS.h>
 #include <task.h>
 
@@ -28,18 +30,20 @@ int main()
   xTaskCreate(vLED2Task, "LED2toggle", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
 
    /* Segger initialization */
+#ifdef USE_SYSVIEW
   SEGGER_SYSVIEW_Conf();
   SEGGER_SYSVIEW_Start();
-
+#endif
+  
   vTaskStartScheduler();
   
-
   while(1)
   {
     // Your program should never get here
   };
   
   return 0;
+  
 }
 
 void vLED1Task(void *pvParameters)
