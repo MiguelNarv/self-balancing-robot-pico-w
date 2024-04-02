@@ -10,12 +10,12 @@ if(SYSVIEW_ENABLED)
                 )
 endif()
 
+add_executable(Source "${SOURCES_TO_ADD}")
+
 # Definition to enable SysView in source
 if(SYSVIEW_ENABLED)
         target_compile_definitions(Source PUBLIC "USE_SYSVIEW=${SYSVIEW_ENABLED}")
 endif()
-
-add_executable(Source "${SOURCES_TO_ADD}")
 
 if(SYSVIEW_ENABLED)
         target_link_libraries(Source SYSVIEW_PORT)

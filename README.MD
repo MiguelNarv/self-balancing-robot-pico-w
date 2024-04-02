@@ -11,7 +11,7 @@ Main branch will contain the project template for now. If you are interested in 
 ## Features:
 Located under Source/lib to achieve portability, main folder contains .cmakes for configuration of each of them.
 
-### Pico C/C++ SDK v1.5.1
+### Pico C SDK v1.5.1
 Contains MCAL libraries for peripherals, CMSIS, among others. See [repository](https://github.com/raspberrypi/pico-sdk) for more information.
 
 ### FreeRTOS v11.0.1
@@ -23,11 +23,10 @@ Modifications:
 - SEGGER_SYSVIEW_FreeRTOS.h required patching.
 - User configurations.
 
-
 ### SEGGER SystemView v3.54
-Used to analize events timing as well as other cpu properties. See [page](https://www.segger.com/products/development-tools/systemview/) for more information.
+Used to analize events timing as well as other cpu properties. See [page](https://www.segger.com/products/development-tools/systemview/) for more information. Single shot analysis is being used.
 
-Single shot analysis is being used.
+**Segger SytemView can be decoupled setting `SYSVIEW_ENABLED FALSE` in CMakeLists.txt file making generated binary smaller.**
 
 Modifications:
 - Patching for M0+ according to user manual.
@@ -42,8 +41,6 @@ Modifications:
     Error -140 in the application might mean that the buffer overflowed.
     - If tasks are invisible in timeline but visible in trace window go to the last event in timeline and start analysis from there.
     
-
-
 ## Tools
 The project is designed to be used with VScode, the following extensions might be needed:
 
@@ -88,7 +85,6 @@ Any DAPLink debugger can be used, tested with LuatOS debugger.
 ### dump_format.py
 Creates the .SVDat required to load for SystemView analysis.
 How to use it:
-
 
 1. With cortex-debug extension create a new watch variable called _SEGGER_RTT.
 2. Stop your debug session when you are done with recording, go to _SEGGER_RTT.aUp[1] and copy the address of pBuffer.

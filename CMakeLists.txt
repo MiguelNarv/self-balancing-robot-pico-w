@@ -10,7 +10,7 @@ set(CMAKE_C_STANDARD 11)
 set(PICO_BOARD pico_w)
 
 # SystemView enable/disable variable
-set(SYSVIEW_ENABLED FALSE)
+set(SYSVIEW_ENABLED TRUE)
 
 # You can set here the wifi credentials you want to connect with if not defined in environment variables
 # set(WIFI_PASSWORD ********)
