@@ -1,0 +1,25 @@
+diff --git a/portable/ThirdParty/GCC/RP2040/port.c b/portable/ThirdParty/GCC/RP2040/port.c
+index ab471d264..2719e7e9b 100644
+--- a/portable/ThirdParty/GCC/RP2040/port.c
++++ b/portable/ThirdParty/GCC/RP2040/port.c
+@@ -36,6 +36,10 @@
+ #include "rp2040_config.h"
+ #include "hardware/clocks.h"
+ #include "hardware/exception.h"
++#ifdef USE_SYSVIEW
++#include "SEGGER_SYSVIEW.h"
++#endif
++
+ 
+ /*
+  * LIB_PICO_MULTICORE == 1, if we are linked with pico_multicore (note that
+@@ -739,6 +743,9 @@ void xPortPendSVHandler( void )
+ void xPortSysTickHandler( void )
+ {
+     uint32_t ulPreviousMask;
++#ifdef USE_SYSVIEW
++    SEGGER_SYSVIEW_TickCnt++;
++#endif
+ 
+     ulPreviousMask = taskENTER_CRITICAL_FROM_ISR();
+     traceISR_ENTER();
