@@ -98,6 +98,12 @@ By default that index will contain the recording, if not replace it with the one
 7. The .SVDat will be created under the same .txt path.
 8. Open SystemView and load it.
 
+### ram_parse.py
+Prints RAM blocks and its percentage consumed in the current build.
+
+It is executed by **Upload task** or **Parse RAM task**, the script can also be
+executed from tools folder: `python ram_parse.py`.
+
 ## Installation
 FreeRTOS and PicoSDK submodules need to be cloned as well, to do that open a git console in the project folder and do:
 
@@ -117,3 +123,7 @@ git submodule update --init --recursive
 ```
 
 SystemView can be download from this [page](https://www.segger.com/downloads/systemview/). Any update or patch on it needs to be done manually.
+
+## Use
+To flash the code you can run the **Upload task** in VScode.  
+To debug you can select the **Cortex Debug OPENOCD** configuration and click start or press F5.

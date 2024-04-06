@@ -22,7 +22,14 @@
             ],
             "problemMatcher": [],
             "group": "build",
-            "dependsOn":["Cmake build"]
+            "dependsOrder": "sequence",
+            "dependsOn":["Cmake build", "Parse RAM"]
+        },
+        {
+            "label": "Parse RAM",
+            "command": "python",
+            "group": "build",
+            "args": ["${workspaceFolder}/tools/ram_parse.py"]
         },
         {
             "label": "Cmake build",

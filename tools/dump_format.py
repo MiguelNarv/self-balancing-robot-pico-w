@@ -2,7 +2,6 @@
 # -narvimg
 
 import sys
-from pathlib import Path
 if __name__ == '__main__':
 
     # Arguments 
@@ -44,5 +43,4 @@ if __name__ == '__main__':
     # Close files
     dumpFile.close()
     svdatFile.close()
-
         
