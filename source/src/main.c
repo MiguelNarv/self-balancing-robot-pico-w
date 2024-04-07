@@ -4,21 +4,19 @@
 #endif
 #include <FreeRTOS.h>
 #include <task.h>
+#include "main.h"
 
 /* Private defines */
-#define LED_PIN_1 17U
-#define LED_PIN_2 18U
 
 /* Private constants */
-const TickType_t xPeriod_50ms = pdMS_TO_TICKS(50U);
-const TickType_t xPeriod_100ms = pdMS_TO_TICKS(100U);
+const TickType_t xPeriod_10ms = pdMS_TO_TICKS(10U);
 
 /* Function prototypes */
-void vLED1Task(void *pvParameters);
-void vLED2Task(void *pvParameters);
+void vI2CPolling(void *pvParameters);
 void vApplicationIdleHook(void);
 
 void picoConfig();
+void errorHandler();
 
 int main()
 {
@@ -26,88 +24,53 @@ int main()
   picoConfig();
 
   /* Tasks creation*/
-  xTaskCreate(vLED1Task, "LED1toggle", configMINIMAL_STACK_SIZE, NULL, 3, NULL);
-  xTaskCreate(vLED2Task, "LED2toggle", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+  xTaskCreate(vI2CPolling, "I2C polling task", configMINIMAL_STACK_SIZE, NULL, 10U, NULL);
 
-   /* Segger initialization */
+  /* Segger initialization */
 #ifdef USE_SYSVIEW
   SEGGER_SYSVIEW_Conf();
   SEGGER_SYSVIEW_Start();
 #endif
-  
+
   vTaskStartScheduler();
-  
-  while(1)
+
+  while (1)
   {
-    // Your program should never get here
+    /* Your program should never get here */
   };
-  
+
   return 0;
-  
 }
 
-void vLED1Task(void *pvParameters)
+void vI2CPolling(void *pvParameters)
 {
   TickType_t xLastWakeTime;
 
   xLastWakeTime = xTaskGetTickCount();
-  uint8_t state = 0U;
 
   for (;;)
   {
-    /* Every 50ms will wait for task */
-    vTaskDelayUntil(&xLastWakeTime, xPeriod_50ms);
+    /* Every 10ms will wait for task */
+    xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
-    gpio_put(LED_PIN_1, state);
 
-    if(state == 0U)
-    {
-      state = 1U;
-    }
-    else
-    {
-      state = 0U;
-    }
   }
 }
 
-void vLED2Task(void *pvParameters)
-{
-  TickType_t xLastWakeTime;
-
-  xLastWakeTime = xTaskGetTickCount();
-  uint8_t state = 0U;
-
-  for (;;)
-  {
-    /* Every 100ms will wait for task */
-    vTaskDelayUntil(&xLastWakeTime, xPeriod_100ms);
-
-    gpio_put(LED_PIN_2, state);
-
-    if(state == 0U)
-    {
-      state = 1U;
-    }
-    else
-    {
-      state = 0U;
-    }
-  }
-}
 
 void picoConfig()
 {
+  int returnValue = 0;
+
   stdio_init_all();
 
-  /* LEDs initialization */
-  gpio_init(LED_PIN_1);
-  gpio_set_dir(LED_PIN_1, GPIO_OUT);
-  gpio_put(LED_PIN_1, 0);
+  /* Initialize I2C MPU6050 */
+  returnValue = initMPU6050();
+  if(returnValue != 0U)
+  {
+    errorHandler();
+  }
 
-  gpio_init(LED_PIN_2);
-  gpio_set_dir(LED_PIN_2, GPIO_OUT);
-  gpio_put(LED_PIN_2, 0);
 }
 
 void vApplicationIdleHook(void)
@@ -117,4 +80,12 @@ void vApplicationIdleHook(void)
     /* Send CPU to low power mode */
     __WFI();
   }
+}
+
+void errorHandler()
+{
+   while (1)
+  {
+    
+  };
 }
