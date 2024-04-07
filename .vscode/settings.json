@@ -15,6 +15,7 @@
         "i2c.h": "c",
         "main.h": "c",
         "time.h": "c",
-        "dreq.h": "c"
+        "dreq.h": "c",
+        "queue.h": "c"
     }
 }
