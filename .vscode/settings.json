@@ -10,6 +10,8 @@
         "segger_sysview_freertos.h": "c",
         "exception.h": "c",
         "timers.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "binary_info.h": "c",
+        "i2c.h": "c"
     }
 }
