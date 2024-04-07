@@ -4,21 +4,23 @@
 #endif
 #include <FreeRTOS.h>
 #include <task.h>
+#include <queue.h>
+#include "main.h"
 
 /* Private defines */
-#define LED_PIN_1 17U
-#define LED_PIN_2 18U
 
 /* Private constants */
-const TickType_t xPeriod_50ms = pdMS_TO_TICKS(50U);
-const TickType_t xPeriod_100ms = pdMS_TO_TICKS(100U);
+const TickType_t xPeriod_10ms = pdMS_TO_TICKS(10U);
+
+/* Private handlers */
+QueueHandle_t xAnglesQueueHandler;
 
 /* Function prototypes */
-void vLED1Task(void *pvParameters);
-void vLED2Task(void *pvParameters);
+void vCalculateAngles(void *pvParameters);
 void vApplicationIdleHook(void);
 
 void picoConfig();
+void errorHandler();
 
 int main()
 {
@@ -26,88 +28,82 @@ int main()
   picoConfig();
 
   /* Tasks creation*/
-  xTaskCreate(vLED1Task, "LED1toggle", configMINIMAL_STACK_SIZE, NULL, 3, NULL);
-  xTaskCreate(vLED2Task, "LED2toggle", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+  xTaskCreate(vCalculateAngles, "Angles calculation task", configMINIMAL_STACK_SIZE, NULL, 10U, NULL);
 
-   /* Segger initialization */
+  /* Segger initialization */
 #ifdef USE_SYSVIEW
   SEGGER_SYSVIEW_Conf();
   SEGGER_SYSVIEW_Start();
 #endif
-  
+
   vTaskStartScheduler();
-  
-  while(1)
+
+  while (1)
   {
-    // Your program should never get here
+    /* Your program should never get here */
   };
-  
+
   return 0;
-  
 }
 
-void vLED1Task(void *pvParameters)
+void vCalculateAngles(void *pvParameters)
 {
   TickType_t xLastWakeTime;
+  MPU6050_data xIMUData;
+  static FilteredAngles xAngles; 
+  double xTemp_phi = 0.0, xTemp_theta = 0.0, xTemp_phi_dot = 0.0, xTemp_theta_dot = 0.0;
+  const double SAMPLE_S = 0.010, FILTER_ALPHA = 0.02;
 
+  xAnglesQueueHandler = xQueueCreate(5, sizeof(FilteredAngles));
   xLastWakeTime = xTaskGetTickCount();
-  uint8_t state = 0U;
 
   for (;;)
   {
-    /* Every 50ms will wait for task */
-    vTaskDelayUntil(&xLastWakeTime, xPeriod_50ms);
+    /* Every 10ms will wait for task */
+    xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
-    gpio_put(LED_PIN_1, state);
+    /* Get accelerometer and gyroscope converted to phys dimensions xyz */
+    getIMUData(&xIMUData);
 
-    if(state == 0U)
-    {
-      state = 1U;
-    }
-    else
-    {
-      state = 0U;
-    }
+    /* Filter xyz */
+    /* Roll (around x) acceleration estimate m/s2 */
+    xTemp_phi = atanf(xIMUData.accelRaw[1U] / sqrt(pow(xIMUData.accelRaw[0U], 2U) + 
+    pow(xIMUData.accelRaw[2U], 2U)))  * RAD_TO_DEG;
+    /* Pitch (around y) acceleration estimate m/s2 */
+    xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]) * RAD_TO_DEG;
+
+    /* Roll angular speed estimate rad/s */
+    /* temp_phi_dot =  (filteredData->gyroRaw[0] + tanf(y_ang)) * 
+                     ((sinf(x_ang) * filteredData->gyroRaw[1]) + (cosf(x_ang) * filteredData->gyroRaw[2])); */
+    xTemp_phi_dot = (xAngles.x_ang + xIMUData.gyroRaw[0U] * SAMPLE_S);
+
+    /* Pitch angular speed estimate rad/s */
+    xTemp_theta_dot = (xAngles.y_ang + xIMUData.gyroRaw[1U] * SAMPLE_S);
+
+     /* Appply complementary filtering */
+    xAngles.x_ang = ((xTemp_phi * FILTER_ALPHA) + ((1.0 - FILTER_ALPHA) * xTemp_phi_dot));
+    
+    xAngles.y_ang = ((xTemp_theta * FILTER_ALPHA) + ((1.0 - FILTER_ALPHA) * xTemp_theta_dot));
+
+    /* Queue filtered angles */
+    xQueueSend(xAnglesQueueHandler, &xAngles, portMAX_DELAY);
   }
 }
 
-void vLED2Task(void *pvParameters)
-{
-  TickType_t xLastWakeTime;
-
-  xLastWakeTime = xTaskGetTickCount();
-  uint8_t state = 0U;
-
-  for (;;)
-  {
-    /* Every 100ms will wait for task */
-    vTaskDelayUntil(&xLastWakeTime, xPeriod_100ms);
-
-    gpio_put(LED_PIN_2, state);
-
-    if(state == 0U)
-    {
-      state = 1U;
-    }
-    else
-    {
-      state = 0U;
-    }
-  }
-}
 
 void picoConfig()
 {
+  int returnValue = 0;
+
   stdio_init_all();
 
-  /* LEDs initialization */
-  gpio_init(LED_PIN_1);
-  gpio_set_dir(LED_PIN_1, GPIO_OUT);
-  gpio_put(LED_PIN_1, 0);
+  /* Initialize I2C MPU6050 */
+  returnValue = initMPU6050();
+  if(returnValue != 2U)
+  {
+    errorHandler();
+  }
 
-  gpio_init(LED_PIN_2);
-  gpio_set_dir(LED_PIN_2, GPIO_OUT);
-  gpio_put(LED_PIN_2, 0);
 }
 
 void vApplicationIdleHook(void)
@@ -117,4 +113,12 @@ void vApplicationIdleHook(void)
     /* Send CPU to low power mode */
     __WFI();
   }
+}
+
+void errorHandler()
+{
+   while (1)
+  {
+    
+  };
 }
