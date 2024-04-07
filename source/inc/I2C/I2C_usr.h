@@ -5,6 +5,6 @@
 
 /* Public functions */
 extern int initMPU6050();
-extern void getRawIMUData(MPU6050_data* data);
+extern void getIMUData(MPU6050_data* data);
 
 #endif 

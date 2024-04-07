@@ -46,7 +46,7 @@ int initMPU6050()
   return returnValue;
 }
 
-void getRawIMUData(MPU6050_data *data)
+void getIMUData(MPU6050_data *data)
 {
   /* Register and conversion constants */
   const uint8_t acc_reg = 0x3B, gyr_reg = 0x43;
