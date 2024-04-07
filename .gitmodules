@@ -1,6 +1,6 @@
-[submodule "Source/lib/FreeRTOS-Kernel"]
-	path = Source/lib/FreeRTOS-Kernel
+[submodule "source/lib/FreeRTOS-Kernel"]
+	path = source/lib/FreeRTOS-Kernel
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
-[submodule "Source/lib/pico-sdk"]
-	path = Source/lib/pico-sdk
+[submodule "source/lib/pico-sdk"]
+	path = source/lib/pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk.git
