@@ -18,6 +18,8 @@
         "dreq.h": "c",
         "queue.h": "c",
         "cyw43_arch.h": "c",
-        "tcpip_usr.h": "c"
+        "tcpip_usr.h": "c",
+        "tcpip_user_cfg.h": "c",
+        "stdio.h": "c"
     }
 }
