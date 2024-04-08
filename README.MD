@@ -6,7 +6,7 @@ LED_PIN_2 connected to pin 24 toggling at 100ms.
 
 ![pico pinout](<misc/PicoW pinout.png>)
 
-Main branch will contain the project template for now. If you are interested in the robot implementation go to ToDo.
+**Main branch will contain the project template for now. If you are interested in the robot implementation go to [My robot Wiki!](https://github.com/MiguelNarv/self-balancing-robot-pico-w/wiki).**
 
 ## Features:
 Located under Source/lib to achieve portability, main folder contains .cmakes for configuration of each of them.
