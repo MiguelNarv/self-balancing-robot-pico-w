@@ -9,6 +9,10 @@ counter = 0.0;
 f = figure;
 x_raw = animatedline('Color','r');
 x_filtered = animatedline('Color','b');
+title('Robot angles')
+legend('X angle','Y angle')
+xlabel(['Time [s]']) 
+ylabel('Angle [deg]') 
 
 %%% Plot 30s of received data
 while counter < 30
@@ -25,8 +29,7 @@ while counter < 30
             addpoints(x_raw,counter,x_ang);
             addpoints(x_filtered,counter,x_ang_filtered);
             
-            legend('X angle','Y angle')
-
+            
             % Update screen
             drawnow limitrate
         else
@@ -37,7 +40,6 @@ while counter < 30
          %%% period.
         counter = counter + 0.02;
 end
-
 
 %% Close TCP/IP
 % Connection with server not closed.
