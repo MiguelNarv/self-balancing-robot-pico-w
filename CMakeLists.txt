@@ -13,8 +13,8 @@ set(PICO_BOARD pico_w)
 set(SYSVIEW_ENABLED TRUE)
 
 # You can set here the wifi credentials you want to connect with if not defined in environment variables
-# set(WIFI_PASSWORD ********)
-# set(WIFI_SSID *********)
+set(WIFI_PASSWORD "$ENV{WIFI_PASSWORD}")
+set(WIFI_SSID "$ENV{WIFI_SSID}")
 
 # FreeRtos kernel path definition
 set(FREERTOS_KERNEL_PATH "${CMAKE_CURRENT_LIST_DIR}/Source/lib/FreeRTOS-Kernel")

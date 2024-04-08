@@ -104,6 +104,12 @@ void picoConfig()
     errorHandler();
   }
 
+  /* Initialize TCPIP */
+  returnValue = initTcpIp();
+  if(returnValue != 0U)
+  {
+    errorHandler();
+  }
 }
 
 void vApplicationIdleHook(void)
