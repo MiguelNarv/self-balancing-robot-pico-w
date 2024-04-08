@@ -11,12 +11,14 @@
 
 /* Private constants */
 const TickType_t xPeriod_10ms = pdMS_TO_TICKS(10U);
+const TickType_t xPeriod_20ms = pdMS_TO_TICKS(20U);
 
 /* Private handlers */
 QueueHandle_t xAnglesQueueHandler;
 
 /* Function prototypes */
 void vCalculateAngles(void *pvParameters);
+void vTCPIPTransmitAngles(void *pvParameters);
 void vApplicationIdleHook(void);
 
 void picoConfig();
@@ -24,11 +26,12 @@ void errorHandler();
 
 int main()
 {
-
+  /* Configuration */
   picoConfig();
 
-  /* Tasks creation*/
+  /* Tasks creation */
   xTaskCreate(vCalculateAngles, "Angles calculation task", configMINIMAL_STACK_SIZE, NULL, 10U, NULL);
+  xTaskCreate(vTCPIPTransmitAngles, "TCPIP send angles task", configMINIMAL_STACK_SIZE, NULL, 9U, NULL);
 
   /* Segger initialization */
 #ifdef USE_SYSVIEW
@@ -73,8 +76,6 @@ void vCalculateAngles(void *pvParameters)
     xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]) * RAD_TO_DEG;
 
     /* Roll angular speed estimate rad/s */
-    /* temp_phi_dot =  (filteredData->gyroRaw[0] + tanf(y_ang)) * 
-                     ((sinf(x_ang) * filteredData->gyroRaw[1]) + (cosf(x_ang) * filteredData->gyroRaw[2])); */
     xTemp_phi_dot = (xAngles.x_ang + xIMUData.gyroRaw[0U] * SAMPLE_S);
 
     /* Pitch angular speed estimate rad/s */
@@ -90,6 +91,32 @@ void vCalculateAngles(void *pvParameters)
   }
 }
 
+void vTCPIPTransmitAngles(void *pvParameters)
+{
+  TickType_t xLastWakeTime;
+  FilteredAngles xAngles;  
+  char txBuffer[] = "";
+
+  xLastWakeTime = xTaskGetTickCount();
+
+  for (;;)
+  {
+    /* Every 20ms will wait for task */
+    xTaskDelayUntil(&xLastWakeTime, xPeriod_20ms);
+
+    /* Poll for background processes to be done */
+    cyw43_arch_poll();
+
+    /* Unqueue filtered angles */
+    xQueueReceive(xAnglesQueueHandler, &xAngles, portMAX_DELAY);
+
+    /* Format angles into a const char buffer */
+    sprintf(txBuffer, "%3.3f, %3.3f\r\n", xAngles.x_ang, xAngles.y_ang);
+
+    /* Send buffer to client */
+    sendTcpIp(txBuffer);
+  }
+}
 
 void picoConfig()
 {
@@ -104,6 +131,12 @@ void picoConfig()
     errorHandler();
   }
 
+  /* Initialize TCPIP */
+  returnValue = initTcpIp();
+  if(returnValue != 0U)
+  {
+    errorHandler();
+  }
 }
 
 void vApplicationIdleHook(void)
@@ -119,6 +152,6 @@ void errorHandler()
 {
    while (1)
   {
-    
+    /* ToDo */
   };
 }

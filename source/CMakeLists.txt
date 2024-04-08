@@ -2,6 +2,7 @@
 set(SOURCES_TO_ADD  
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
         ${CMAKE_CURRENT_LIST_DIR}/src/I2C/I2C_usr.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/TCPIP/TCPIP_usr.c
         )
 
 if(SYSVIEW_ENABLED)
@@ -20,6 +21,11 @@ if(SYSVIEW_ENABLED)
         target_compile_definitions(Source PUBLIC "USE_SYSVIEW=${SYSVIEW_ENABLED}")
 endif()
 
+target_compile_definitions(Source PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        )
+
 if(SYSVIEW_ENABLED)
         target_link_libraries(Source SYSVIEW_PORT)
 endif()
@@ -32,7 +38,7 @@ target_link_libraries(Source
         # Pico related ports
         pico_stdlib
         hardware_i2c
-        # pico_cyw43_arch_lwip_threadsafe_background
+        pico_cyw43_arch_lwip_poll
         # Other libraries ports
         FreeRTOS-Kernel-Heap4
         LWIP_PORT    
