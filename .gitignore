@@ -1,3 +1,4 @@
 build/
 tools/*.txt
 tools/*.SVDat
+tools/*.asv
