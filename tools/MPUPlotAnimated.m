@@ -5,41 +5,51 @@ t= tcpclient('192.168.1.234',4242,"ConnectTimeout",7);
 configureTerminator(t,"CR/LF")
 
 %% Plot received buffer
+RECORDING_TIME = 10;
+TRANSMITION_PERIOD = 0.02;
 counter = 0.0;
+index = 1;
+
+% Figure properties.
 f = figure;
-x_raw = animatedline('Color','r');
-x_filtered = animatedline('Color','b');
+y_ang_xaxis = animatedline('Color','b');
 title('Robot angles')
-legend('X angle','Y angle')
-xlabel(['Time [s]']) 
+legend('X angle')
+xlabel('Time [s]') 
 ylabel('Angle [deg]') 
 
-%%% Plot 30s of received data
-while counter < 30
+% Initialize recording buffers.
+recordedTime = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+recordedYAngle = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+
+% Plot RECORDING_TIME of received data.
+while counter < RECORDING_TIME
         
-        %%% If a message of the transmit buffer size is received from
-        %%% server do the animated plot.
-        if t.NumBytesAvailable > 11
-            %%% Spit and format received buffer.
-            rxArray = strsplit(readline(t), ',');
-            x_ang = str2double(rxArray{1});
-            x_ang_filtered = str2double(rxArray{2});
-            
-            % Add points.
-            addpoints(x_raw,counter,x_ang);
-            addpoints(x_filtered,counter,x_ang_filtered);
-            
-            
-            % Update screen
-            drawnow limitrate
-        else
-            %%% Period of data received, based on pico transmit period.
-            pause(0.02)
-        end
-         %%% Innrement for desired analysis time, based on pico transmit 
-         %%% period.
-        counter = counter + 0.02;
+    % If a message is received from server do the animated plot.
+    if t.NumBytesAvailable > 0
+
+        % Format received buffer.
+        y_ang = str2double(readline(t));
+        
+        % Add points.
+        addpoints(y_ang_xaxis,counter,y_ang);
+        
+        recordedTime(index) = counter;
+        recordedYAngle(index) = y_ang;
+        
+        % Update screen
+        drawnow limitrate
+    
+    % Increment for desired analysis time, based on pico transmit 
+    % period.
+    counter = counter + TRANSMITION_PERIOD;
+    index = index + 1;
+    end
+        
 end
+%% Save recorded data
+% Save matrix in current folder as .xlsx.
+writematrix([recordedTime; recordedYAngle], "Robot_recordings.xlsx");
 
 %% Close TCP/IP
 % Connection with server not closed.
