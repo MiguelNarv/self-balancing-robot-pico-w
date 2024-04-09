@@ -6,9 +6,13 @@ LED_PIN_2 connected to pin 24 toggling at 100ms.
 
 ![pico pinout](<misc/PicoW pinout.png>)
 
-**Main branch will contain the project template for now. If you are interested in the robot implementation go to [My robot Wiki!](https://github.com/MiguelNarv/self-balancing-robot-pico-w/wiki).**
+## Structure
+main branch will contain the RP2040 project template for now.   
+develop branch contains the robot implementation, from there each feature has its own branch.
+For robot documentation go to [My robot Wiki!](https://github.com/MiguelNarv/self-balancing-robot-pico-w/wiki).
 
-## Features:
+
+## Features
 Located under Source/lib to achieve portability, main folder contains .cmakes for configuration of each of them.
 
 ### Pico C SDK v1.5.1
@@ -32,7 +36,7 @@ Modifications:
 - Patching for M0+ according to user manual.
 
 ![SystemView trace](<misc/SystemView trace.png>)
-### Notes:
+### Notes
 - FreeRtos config is set for 1 core as SystemView doesn't support multi core yet. If you are not interested in SystemView analysis you can set `#define configNUMBER_OF_CORES                   2` and other configurations accordingly.
 - For SystemView:
     - It is recommended to add `SEGGER_SYSVIEW_TickCnt++;` at the beggining of xPortSysTickHandler and include `#include "SEGGER_SYSVIEW.h"` under source\lib\FreeRTOS-Kernel\portable\ThirdParty\GCC\RP2040\port.c. Inaccurate timestamps may be recorded if this patch is not applied.  
