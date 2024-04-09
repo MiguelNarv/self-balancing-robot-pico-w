@@ -54,7 +54,7 @@ void vCalculateAngles(void *pvParameters)
   TickType_t xLastWakeTime;
   MPU6050_data xIMUData;
   static FilteredAngles xAngles; 
-  double xTemp_phi = 0.0, xTemp_theta = 0.0, xTemp_phi_dot = 0.0, xTemp_theta_dot = 0.0;
+  double xTemp_theta = 0.0, xTemp_theta_dot = 0.0;
   const double SAMPLE_S = 0.010, FILTER_ALPHA = 0.02;
 
   xAnglesQueueHandler = xQueueCreate(5, sizeof(FilteredAngles));
@@ -68,26 +68,17 @@ void vCalculateAngles(void *pvParameters)
     /* Get accelerometer and gyroscope converted to phys dimensions xyz */
     getIMUData(&xIMUData);
 
-    /* Filter xyz */
-    /* Roll (around x) acceleration estimate m/s2 */
-    xTemp_phi = atanf(xIMUData.accelRaw[1U] / sqrt(pow(xIMUData.accelRaw[0U], 2U) + 
-    pow(xIMUData.accelRaw[2U], 2U)))  * RAD_TO_DEG;
+    /* Filter y */
     /* Pitch (around y) acceleration estimate m/s2 */
     xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]) * RAD_TO_DEG;
 
-    /* Roll angular speed estimate rad/s */
-    xTemp_phi_dot = (xAngles.x_ang + xIMUData.gyroRaw[0U] * SAMPLE_S);
-
     /* Pitch angular speed estimate rad/s */
     xTemp_theta_dot = (xAngles.y_ang + xIMUData.gyroRaw[1U] * SAMPLE_S);
-
-     /* Appply complementary filtering */
-    xAngles.x_ang = ((xTemp_phi * FILTER_ALPHA) + ((1.0 - FILTER_ALPHA) * xTemp_phi_dot));
     
     xAngles.y_ang = ((xTemp_theta * FILTER_ALPHA) + ((1.0 - FILTER_ALPHA) * xTemp_theta_dot));
 
     /* Queue filtered angles */
-    xQueueSend(xAnglesQueueHandler, &xAngles, portMAX_DELAY);
+    xQueueSend(xAnglesQueueHandler, &xAngles.y_ang, portMAX_DELAY);
   }
 }
 
@@ -108,10 +99,10 @@ void vTCPIPTransmitAngles(void *pvParameters)
     cyw43_arch_poll();
 
     /* Unqueue filtered angles */
-    xQueueReceive(xAnglesQueueHandler, &xAngles, portMAX_DELAY);
+    xQueueReceive(xAnglesQueueHandler, &xAngles.y_ang, portMAX_DELAY);
 
     /* Format angles into a const char buffer */
-    sprintf(txBuffer, "%3.3f, %3.3f\r\n", xAngles.x_ang, xAngles.y_ang);
+    sprintf(txBuffer, "%3.3f\r\n", xAngles.y_ang);
 
     /* Send buffer to client */
     sendTcpIp(txBuffer);
