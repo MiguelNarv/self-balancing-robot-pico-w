@@ -2,3 +2,5 @@ build/
 tools/*.txt
 tools/*.SVDat
 tools/*.asv
+tools/MPUPlotRecorded.m
+tools/*.xlsx
