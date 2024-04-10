@@ -1,3 +1,13 @@
+/* TCPIP source file
+ * 
+ * For its use with CYW43 on board chip. 
+ * Any client IP can bind on the defined port, once connected to a point a
+ * task excecutes cyw43_arch_poll which runs necessary processes that otherwise 
+ * can end up in errors.
+ * 
+ * Based on pico-examples/wifi/tcp_server/picow_tcp_server.c
+ */
+
 #include "TCPIP/TCPIP_usr.h"
 #include <pico/stdlib.h>
 #include <pico/cyw43_arch.h>
@@ -5,7 +15,7 @@
 
 /* Private definitions */
 #define TCP_PORT 4242
-#define BUF_SIZE 512
+#define BUF_SIZE 256
 
 /* Private types */
 typedef struct
@@ -28,6 +38,10 @@ TCP_SERVER_T *TcpIpInstance;
 err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err);
 void tcp_server_err(void *arg, err_t err);
 
+/* Name: initTcpIp() 
+ * Description: Initializes CYW43 then connects to wifi point. If this connections doesn't times
+ * out then a socket is created and put to listen for receiving any IP address request. 
+ */
 tcpError initTcpIp()
 {
   tcpError returnValue = E_OK;
@@ -40,6 +54,7 @@ tcpError initTcpIp()
 
   cyw43_arch_enable_sta_mode();
 
+  /* Connect to given wifi point with 20s timeout */
   if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 20000U))
   {
     returnValue = E_CONNECTION;
@@ -80,11 +95,15 @@ tcpError initTcpIp()
   return returnValue;
 }
 
+/* Name: closeTcpIp() 
+ * Description: Clears the existent client instances closing any connection with them.
+ */
 tcpError closeTcpIp()
 {
   tcpError returnValue = E_OK;
   err_t err = ERR_OK;
 
+  /* Once running, server is never closed. Only client instances can */
   if (TcpIpInstance->client_pcb != NULL)
   {
     tcp_arg(TcpIpInstance->client_pcb, NULL);
@@ -111,15 +130,23 @@ tcpError closeTcpIp()
   return returnValue;
 }
 
+/* Name: sendTcpIp(char txBuffer[])
+ * Arguments: txBuffer is the char array written to server tx buffer. It size can't be 
+ * smaller than BUF_SIZE.
+ * Description: Copies char array to tx buffer and writes it to the current socket.
+ */
 tcpError sendTcpIp(char txBuffer[])
 {
   tcpError returnValue = E_OK;
   err_t err = ERR_OK;
 
+  /* Start context */
   cyw43_arch_lwip_begin();
 
+  /* Copy passed char array to the tx buffer of the initialized handler */
   memcpy(TcpIpInstance->buffer_sent, txBuffer, strlen(txBuffer));
 
+  /* Check context */
   cyw43_arch_lwip_check();
 
   /* Write socket with tx buffer from server */
@@ -130,11 +157,15 @@ tcpError sendTcpIp(char txBuffer[])
     returnValue = E_SEND;
   }
 
+  /* Exit context */
   cyw43_arch_lwip_end();
 
   return returnValue;
 }
 
+/* Name: receiveTcpIp()
+ * Description: Retrieves received data from server rx buffer.
+ */
 tcpError receiveTcpIp()
 {
   tcpError returnValue = E_OK;
@@ -144,6 +175,13 @@ tcpError receiveTcpIp()
   return returnValue;
 }
 
+/* Name: tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
+ * Arguments: arg is the pointer to current tcpip server instance, client_pcb
+ * is the pointer to the tcpip client instance which wants to connect, err is
+ * the error message received from the connection accept process.
+ * Description: Callback for tcp_accept, the client instance is copied to
+ * our tcpip one. 
+ */
 err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
 {
   err_t returnValue = ERR_OK;
@@ -162,6 +200,12 @@ err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
   return returnValue;
 }
 
+/* Name: tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
+ * Arguments: arg is the pointer to current tcpip server instance, err is
+ * the error message received from the connection accept process.
+ * Description: Callback for tcp_err, if any error occurs the socket connection
+ * with client is closed.
+ */
 void tcp_server_err(void *arg, err_t err)
 {
   (void)closeTcpIp();

@@ -17,7 +17,9 @@
 #define SCL_PIN PICO_DEFAULT_I2C_SCL_PIN /* GP5*/
 #define I2C_FREQ 100000U
 
-
+/* Name: initMPU6050()
+ * Description: Defines module configrations and resets and wakes module.
+ */
 int initMPU6050()
 {
   /* Register and value constants */
@@ -46,6 +48,12 @@ int initMPU6050()
   return returnValue;
 }
 
+/* Name: getIMUData(MPU6050_data *data)
+ * Arguments: data is a pointer to the structure where the received values
+ * will be copied.
+ * Description: Reads IMU accelerometer and gyroscope currrent values. Converts
+ * them from byte to physical dimensions.
+ */
 void getIMUData(MPU6050_data *data)
 {
   /* Register and conversion constants */
@@ -69,7 +77,7 @@ void getIMUData(MPU6050_data *data)
 
   for (uint8_t i = 0U; i < 3U; i++)
   {
-    /* Parse and scale xyz values from byte to deg/s */
+    /* Parse and scale xyz values from byte to rad/s */
     data->gyroRaw[i] = ((int16_t)(tempBuffer[i * 2U] << 8U | tempBuffer[(i * 2U) + 1U])) * gyr_scaling;
   }
 }
