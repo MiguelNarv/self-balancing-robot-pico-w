@@ -20,6 +20,7 @@ QueueHandle_t xAnglesQueueHandler;
 void vCalculateAngles(void *pvParameters);
 void vTCPIPTransmitAngles(void *pvParameters);
 void vApplicationIdleHook(void);
+void vISRRightEncoder(uint gpio, uint32_t event_mask);
 
 void picoConfig();
 void errorHandler();
@@ -109,6 +110,11 @@ void vTCPIPTransmitAngles(void *pvParameters)
   }
 }
 
+void vISRRightEncoder(uint gpio, uint32_t event_mask)
+{
+
+}
+
 void picoConfig()
 {
   int returnValue = 0;
@@ -128,6 +134,9 @@ void picoConfig()
   {
     errorHandler();
   }
+
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISRRightEncoder);
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISRRightEncoder);
 }
 
 void vApplicationIdleHook(void)
