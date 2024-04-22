@@ -5,18 +5,31 @@ t= tcpclient('192.168.1.234',4242,"ConnectTimeout",7);
 configureTerminator(t,"CR/LF")
 
 %% Plot received buffer
-RECORDING_TIME = 10;
+RECORDING_TIME = 30;
 TRANSMITION_PERIOD = 0.02;
 counter = 0.0;
 index = 1;
 
 % Figure properties.
 f = figure;
-y_ang_xaxis = animatedline('Color','b');
-title('Robot angles')
-legend('X angle')
+subplot(3,1,1);
+yAngXAxis = animatedline('Color','b');
+title('Robot measurements')
+legend('Y angle')
 xlabel('Time [s]') 
 ylabel('Angle [deg]') 
+
+subplot(3,1,2);
+rightSpeedXAxis = animatedline('Color','r');
+legend('Right wheel speed')
+xlabel('Time [s]') 
+ylabel('Speed [rad/s]') 
+
+subplot(3,1,3);
+leftSpeedXAxis = animatedline('Color','g');
+legend('left wheel speed')
+xlabel('Time [s]') 
+ylabel('Speed [rad/s]') 
 
 % Initialize recording buffers.
 recordedTime = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
@@ -27,15 +40,21 @@ while counter < RECORDING_TIME
         
     % If a message is received from server do the animated plot.
     if t.NumBytesAvailable > 0
-
+        
         % Format received buffer.
-        y_ang = str2double(readline(t));
+        rxBuffer = strsplit(readline(t), ",");
+        
+        yAng = str2double(rxBuffer{1});
+        rightSpeed = str2double(rxBuffer{2});
+        leftSpeed = str2double(rxBuffer{3});
         
         % Add points.
-        addpoints(y_ang_xaxis,counter,y_ang);
-        
+        addpoints(yAngXAxis,counter,yAng);
+        addpoints(rightSpeedXAxis,counter,rightSpeed);
+        addpoints(leftSpeedXAxis,counter,leftSpeed);
+
         recordedTime(index) = counter;
-        recordedYAngle(index) = y_ang;
+        recordedYAngle(index) = yAng;
         
         % Update screen
         drawnow limitrate

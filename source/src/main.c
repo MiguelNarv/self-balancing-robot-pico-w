@@ -5,9 +5,11 @@
 #include <FreeRTOS.h>
 #include <task.h>
 #include <queue.h>
+#include <semphr.h>
 #include "main.h"
 
 /* Private defines */
+static int rightCounts = 0, leftCounts = 0;
 
 /* Private constants */
 const TickType_t xPeriod_10ms = pdMS_TO_TICKS(10U);
@@ -15,11 +17,15 @@ const TickType_t xPeriod_20ms = pdMS_TO_TICKS(20U);
 
 /* Private handlers */
 QueueHandle_t xAnglesQueueHandler;
+QueueHandle_t xSpeedQueueHandler;
+SemaphoreHandle_t xControlSemaphoreHandler;
 
 /* Function prototypes */
 void vCalculateAngles(void *pvParameters);
+void vControlAlgorithm(void *pvParameters);
 void vTCPIPTransmitAngles(void *pvParameters);
 void vApplicationIdleHook(void);
+void vISREncoderChannels(uint gpio, uint32_t event_mask);
 
 void picoConfig();
 void errorHandler();
@@ -29,8 +35,15 @@ int main()
   /* Configuration */
   picoConfig();
 
+  /* Queues creation */
+  xAnglesQueueHandler = xQueueCreate(5, sizeof(FilteredAngles));
+  xSpeedQueueHandler = xQueueCreate(5, sizeof(WheelsSpeed));
+
+  /* Semaphores creation */
+
   /* Tasks creation */
   xTaskCreate(vCalculateAngles, "Angles calculation task", configMINIMAL_STACK_SIZE, NULL, 10U, NULL);
+  xTaskCreate(vControlAlgorithm, "Set PWM task", configMINIMAL_STACK_SIZE, NULL, 11U, NULL);
   xTaskCreate(vTCPIPTransmitAngles, "TCPIP send angles task", configMINIMAL_STACK_SIZE, NULL, 9U, NULL);
 
   /* Segger initialization */
@@ -57,7 +70,6 @@ void vCalculateAngles(void *pvParameters)
   double xTemp_theta = 0.0, xTemp_theta_dot = 0.0;
   const double SAMPLE_S = 0.010, FILTER_ALPHA = 0.02;
 
-  xAnglesQueueHandler = xQueueCreate(5, sizeof(FilteredAngles));
   xLastWakeTime = xTaskGetTickCount();
 
   for (;;)
@@ -78,7 +90,7 @@ void vCalculateAngles(void *pvParameters)
     xAngles.y_ang = ((xTemp_theta * FILTER_ALPHA) + ((1.0 - FILTER_ALPHA) * xTemp_theta_dot));
 
     /* Queue filtered angles */
-    xQueueSend(xAnglesQueueHandler, &xAngles.y_ang, portMAX_DELAY);
+    xQueueSend(xAnglesQueueHandler, &xAngles.y_ang, 0U);
   }
 }
 
@@ -86,7 +98,8 @@ void vTCPIPTransmitAngles(void *pvParameters)
 {
   TickType_t xLastWakeTime;
   FilteredAngles xAngles;  
-  char txBuffer[] = "";
+  WheelsSpeed xSpeed; 
+  char xTxBuffer[] = "";
 
   xLastWakeTime = xTaskGetTickCount();
 
@@ -100,13 +113,100 @@ void vTCPIPTransmitAngles(void *pvParameters)
 
     /* Unqueue filtered angles */
     xQueueReceive(xAnglesQueueHandler, &xAngles.y_ang, portMAX_DELAY);
+    xQueueReceive(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
 
     /* Format angles into a const char buffer */
-    sprintf(txBuffer, "%3.3f\r\n", xAngles.y_ang);
+    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xSpeed.left_speed);
 
     /* Send buffer to client */
-    sendTcpIp(txBuffer);
+    sendTcpIp(xTxBuffer);
   }
+}
+
+void vControlAlgorithm(void *pvParameters)
+{
+  TickType_t xLastWakeTime;
+  WheelsSpeed xSpeed; 
+  static int xRightTmpCounts, xleftTmpCounts = 0;
+
+  xLastWakeTime = xTaskGetTickCount();
+  for (;;)
+  {
+     /* Every 10ms will wait for task */
+    xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
+
+    xSpeed.right_speed =  (2U * PI * (rightCounts - xRightTmpCounts)) / 
+                        (PPR * 0.01);
+
+    xSpeed.left_speed =  (2U * PI * (leftCounts - xleftTmpCounts)) / 
+                        (PPR * 0.01);
+
+    xRightTmpCounts = rightCounts;
+    xleftTmpCounts = leftCounts;
+    xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
+    
+  }
+}
+
+void vISREncoderChannels(uint gpio, uint32_t event_mask)
+{
+  static int rightDirection = 1, leftDirection = 1;
+
+  if((gpio == RIGHT_ENCODER_A_PIN) || (gpio == RIGHT_ENCODER_B_PIN))
+  {
+    if((gpio == RIGHT_ENCODER_A_PIN) && (rightDirection == -1))
+    {
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_B_PIN) == 0U))
+      {
+        rightDirection = 1;
+      }
+    }
+    else if ((gpio == RIGHT_ENCODER_B_PIN) && (rightDirection == 1))
+    {
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_A_PIN) == 0U))
+      {
+        rightDirection = -1;
+      }
+    }
+
+    if(rightDirection == 1)
+    {
+      rightCounts++;
+    }
+    else
+    {
+      rightCounts--;
+    }
+  }
+  else
+  {
+    if((gpio == LEFT_ENCODER_A_PIN) && (leftDirection == -1))
+    {
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_B_PIN) == 0U))
+      {
+        leftDirection = 1;
+      }
+    }
+    else if ((gpio == LEFT_ENCODER_B_PIN) && (leftDirection == 1))
+    {
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_A_PIN) == 0U))
+      {
+        leftDirection = -1;
+      }
+    }
+
+    if(leftDirection == 1)
+    {
+      leftCounts++;
+    }
+    else
+    {
+      leftCounts--;
+    }
+  }
+  
+
+  
 }
 
 void picoConfig()
@@ -128,6 +228,11 @@ void picoConfig()
   {
     errorHandler();
   }
+
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(LEFT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(LEFT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
 }
 
 void vApplicationIdleHook(void)

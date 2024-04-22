@@ -7,7 +7,13 @@
 #include "pico/cyw43_arch.h"
 
 /* Private definitions */
-#define RAD_TO_DEG 57.2957795131f
+#define RIGHT_ENCODER_A_PIN 18U
+#define RIGHT_ENCODER_B_PIN 19U
+#define LEFT_ENCODER_A_PIN  20U
+#define LEFT_ENCODER_B_PIN  21U
+#define RAD_TO_DEG          57.29577951
+#define PPR                 1632U
+#define PI                  3.14159265
 
 /* Private types */
 typedef struct
@@ -17,6 +23,11 @@ typedef struct
   double z_ang;
 } FilteredAngles;
 
+typedef struct
+{
+  double right_speed;
+  double left_speed;
+} WheelsSpeed;
 /* Private constants */
 
 
