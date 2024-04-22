@@ -9,7 +9,7 @@
 #include "main.h"
 
 /* Private defines */
-static int Counts = 0;
+static int rightCounts = 0, leftCounts = 0;
 
 /* Private constants */
 const TickType_t xPeriod_10ms = pdMS_TO_TICKS(10U);
@@ -25,7 +25,7 @@ void vCalculateAngles(void *pvParameters);
 void vControlAlgorithm(void *pvParameters);
 void vTCPIPTransmitAngles(void *pvParameters);
 void vApplicationIdleHook(void);
-void vISRRightEncoder(uint gpio, uint32_t event_mask);
+void vISREncoderChannels(uint gpio, uint32_t event_mask);
 
 void picoConfig();
 void errorHandler();
@@ -127,7 +127,7 @@ void vControlAlgorithm(void *pvParameters)
 {
   TickType_t xLastWakeTime;
   WheelsSpeed xSpeed; 
-  static int xTmpCounts = 0;
+  static int xRightTmpCounts, xleftTmpCounts = 0;
 
   xLastWakeTime = xTaskGetTickCount();
   for (;;)
@@ -135,41 +135,69 @@ void vControlAlgorithm(void *pvParameters)
      /* Every 10ms will wait for task */
     xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
-    xSpeed.right_speed =  (2U * PI * (Counts - xTmpCounts)) / 
+    xSpeed.right_speed =  (2U * PI * (rightCounts - xRightTmpCounts)) / 
                         (PPR * 0.01);
 
-    xTmpCounts = Counts;
+    xSpeed.left_speed =  (2U * PI * (leftCounts - xleftTmpCounts)) / 
+                        (PPR * 0.01);
+
+    xRightTmpCounts = rightCounts;
+    xleftTmpCounts = leftCounts;
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     
   }
 }
 
-void vISRRightEncoder(uint gpio, uint32_t event_mask)
+void vISREncoderChannels(uint gpio, uint32_t event_mask)
 {
-  static int direction = 1;
+  static int rightDirection = 1, leftDirection = 1;
 
-  if((gpio = RIGHT_ENCODER_A_PIN) && (direction == -1))
+  if((gpio = RIGHT_ENCODER_A_PIN) && (rightDirection == -1))
   {
     if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_B_PIN) == 0U))
     {
-      direction = 1;
+      rightDirection = 1;
     }
   }
-  else if ((gpio = RIGHT_ENCODER_B_PIN) && (direction == 1))
+  else if ((gpio = RIGHT_ENCODER_B_PIN) && (rightDirection == 1))
   {
     if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_A_PIN) == 0U))
     {
-      direction = -1;
+      rightDirection = -1;
     }
   }
 
-  if(direction == 1)
+  if((gpio = LEFT_ENCODER_A_PIN) && (leftDirection == -1))
   {
-    Counts++;
+    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_B_PIN) == 0U))
+    {
+      leftDirection = 1;
+    }
   }
-  else
+  else if ((gpio = LEFT_ENCODER_B_PIN) && (leftDirection == 1))
   {
-    Counts--;
+    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_A_PIN) == 0U))
+    {
+      leftDirection = -1;
+    }
+  }
+
+  if(rightDirection == 1)
+  {
+    rightCounts++;
+  }
+  else if(rightDirection == -1)
+  {
+    rightCounts--;
+  }
+
+  if(leftDirection == 1)
+  {
+    leftCounts++;
+  }
+  else if(leftDirection == -1)
+  {
+    leftCounts--;
   }
 }
 
@@ -193,8 +221,11 @@ void picoConfig()
     errorHandler();
   }
 
-  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISRRightEncoder);
-  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISRRightEncoder);
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(LEFT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+  gpio_set_irq_enabled_with_callback(LEFT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+}
 }
 
 void vApplicationIdleHook(void)
@@ -202,7 +233,7 @@ void vApplicationIdleHook(void)
   for (;;)
   {
     /* Send CPU to low power mode */
-    /* __WFI(); */
+    __WFI();
   }
 }
 
