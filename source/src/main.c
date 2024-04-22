@@ -116,7 +116,7 @@ void vTCPIPTransmitAngles(void *pvParameters)
     xQueueReceive(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
 
     /* Format angles into a const char buffer */
-    sprintf(xTxBuffer, "%3.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed);
+    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xSpeed.left_speed);
 
     /* Send buffer to client */
     sendTcpIp(xTxBuffer);
@@ -152,53 +152,61 @@ void vISREncoderChannels(uint gpio, uint32_t event_mask)
 {
   static int rightDirection = 1, leftDirection = 1;
 
-  if((gpio = RIGHT_ENCODER_A_PIN) && (rightDirection == -1))
+  if((gpio == RIGHT_ENCODER_A_PIN) || (gpio == RIGHT_ENCODER_B_PIN))
   {
-    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_B_PIN) == 0U))
+    if((gpio == RIGHT_ENCODER_A_PIN) && (rightDirection == -1))
     {
-      rightDirection = 1;
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_B_PIN) == 0U))
+      {
+        rightDirection = 1;
+      }
     }
-  }
-  else if ((gpio = RIGHT_ENCODER_B_PIN) && (rightDirection == 1))
-  {
-    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_A_PIN) == 0U))
+    else if ((gpio == RIGHT_ENCODER_B_PIN) && (rightDirection == 1))
     {
-      rightDirection = -1;
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(RIGHT_ENCODER_A_PIN) == 0U))
+      {
+        rightDirection = -1;
+      }
     }
-  }
 
-  if((gpio = LEFT_ENCODER_A_PIN) && (leftDirection == -1))
-  {
-    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_B_PIN) == 0U))
+    if(rightDirection == 1)
     {
-      leftDirection = 1;
+      rightCounts++;
+    }
+    else
+    {
+      rightCounts--;
     }
   }
-  else if ((gpio = LEFT_ENCODER_B_PIN) && (leftDirection == 1))
+  else
   {
-    if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_A_PIN) == 0U))
+    if((gpio == LEFT_ENCODER_A_PIN) && (leftDirection == -1))
     {
-      leftDirection = -1;
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_B_PIN) == 0U))
+      {
+        leftDirection = 1;
+      }
+    }
+    else if ((gpio == LEFT_ENCODER_B_PIN) && (leftDirection == 1))
+    {
+      if((event_mask == GPIO_IRQ_EDGE_RISE) && (gpio_get(LEFT_ENCODER_A_PIN) == 0U))
+      {
+        leftDirection = -1;
+      }
+    }
+
+    if(leftDirection == 1)
+    {
+      leftCounts++;
+    }
+    else
+    {
+      leftCounts--;
     }
   }
+  
 
-  if(rightDirection == 1)
-  {
-    rightCounts++;
-  }
-  else if(rightDirection == -1)
-  {
-    rightCounts--;
-  }
-
-  if(leftDirection == 1)
-  {
-    leftCounts++;
-  }
-  else if(leftDirection == -1)
-  {
-    leftCounts--;
-  }
+  
 }
 
 void picoConfig()
@@ -225,7 +233,6 @@ void picoConfig()
   gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
   gpio_set_irq_enabled_with_callback(LEFT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
   gpio_set_irq_enabled_with_callback(LEFT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
-}
 }
 
 void vApplicationIdleHook(void)
