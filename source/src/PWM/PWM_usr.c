@@ -19,6 +19,9 @@
 #define RIGHT_PWM_PIN       14U
 #define LEFT_PWM_PIN        15U
 
+#define TOP_DUTY_CYCLE      1023U
+#define MID_DUTY_CYCLE      511U
+
 /* Name: initPWMModule()
  * Description: Initializes used pins and configures pwm.
  */
@@ -50,10 +53,41 @@ void initPWMModule()
   pwm_config_set_clkdiv(&leftConfig, SYS_CLK_MHZ);
 
   /* Set wrap to 10 bit */
-  pwm_config_set_wrap(&rightConfig, 1023U); 
-  pwm_config_set_wrap(&leftConfig, 1023U);
+  pwm_config_set_wrap(&rightConfig, TOP_DUTY_CYCLE); 
+  pwm_config_set_wrap(&leftConfig, TOP_DUTY_CYCLE);
 
   /* Init pwm */
   pwm_init(rightSlice, &rightConfig, true);
   pwm_init(leftSlice, &leftConfig, true);
+}
+
+void setPWM(PWM_output values)
+{
+  gpio_put(H_BRIGDE_STDBY_PIN, values.stdby);
+
+  if(values.rightDuty < MID_DUTY_CYCLE)
+  {
+    gpio_put(RIGHT_IN1_PIN, 0U);
+    gpio_put(RIGHT_IN2_PIN, 1U);
+  }
+  else
+  {
+    gpio_put(RIGHT_IN1_PIN, 1U);
+    gpio_put(RIGHT_IN2_PIN, 0U);
+  }
+
+  if(values.leftDuty < MID_DUTY_CYCLE)
+  {
+    gpio_put(LEFT_IN1_PIN, 0U);
+    gpio_put(LEFT_IN2_PIN, 1U);
+  }
+  else
+  {
+    gpio_put(LEFT_IN1_PIN, 1U);
+    gpio_put(LEFT_IN2_PIN, 0U);
+  }
+  
+  pwm_set_gpio_level(RIGHT_PWM_PIN, values.rightDuty);
+  pwm_set_gpio_level(LEFT_PWM_PIN, values.leftDuty);
+  
 }

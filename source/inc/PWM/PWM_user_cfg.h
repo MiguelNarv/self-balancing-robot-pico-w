@@ -5,13 +5,9 @@
 
 typedef struct
 {
-  uint8_t   Stdby; 
-  uint8_t   Right_in1;  
-  uint8_t   Right_in2;  
-  uint8_t   Left_in1;   
-  uint8_t   Left_in2; 
-  uint16_t  Right_duty;
-  uint16_t  Left_duty;
+  uint8_t   stdby; 
+  uint16_t  rightDuty;
+  uint16_t  leftDuty;
 } PWM_output;
 
 #endif

@@ -25,6 +25,8 @@
         "pwm_usr.h": "c",
         "i2c_usr.h": "c",
         "gpio.h": "c",
-        "random": "c"
+        "random": "c",
+        "pwm.h": "c",
+        "pwm_user_cfg.h": "c"
     }
 }
