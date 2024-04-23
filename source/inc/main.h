@@ -5,6 +5,7 @@
 #include "I2C/I2C_usr.h"
 #include "TCPIP/TCPIP_usr.h"
 #include "PWM/PWM_usr.h"
+#include "Control/Control_usr.h"
 #include "pico/cyw43_arch.h"
 
 /* Private definitions */
@@ -31,6 +32,5 @@ typedef struct
   double left_speed;
 } WheelsSpeed;
 /* Private constants */
-
 
 #endif

@@ -27,6 +27,7 @@
         "gpio.h": "c",
         "random": "c",
         "pwm.h": "c",
-        "pwm_user_cfg.h": "c"
+        "pwm_user_cfg.h": "c",
+        "control_usr.h": "c"
     }
 }

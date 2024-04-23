@@ -3,6 +3,8 @@ set(SOURCES_TO_ADD
         ${CMAKE_CURRENT_LIST_DIR}/src/main.c
         ${CMAKE_CURRENT_LIST_DIR}/src/I2C/I2C_usr.c
         ${CMAKE_CURRENT_LIST_DIR}/src/TCPIP/TCPIP_usr.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/PWM/PWM_usr.c
+        ${CMAKE_CURRENT_LIST_DIR}/src/Control/Control_usr.c
         )
 
 if(SYSVIEW_ENABLED)
@@ -38,6 +40,7 @@ target_link_libraries(Source
         # Pico related ports
         pico_stdlib
         hardware_i2c
+        hardware_pwm
         pico_cyw43_arch_lwip_poll
         # Other libraries ports
         FreeRTOS-Kernel-Heap4
