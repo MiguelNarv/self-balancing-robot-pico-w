@@ -142,13 +142,10 @@ void vControlAlgorithm(void *pvParameters)
     xSpeed.left_speed =  (2U * PI * (leftCounts - xleftTmpCounts)) / 
                         (PPR * 0.01);
 
-    /* Duty  */
-
     xRightTmpCounts = rightCounts;
     xleftTmpCounts = leftCounts;
     
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
-    
   }
 }
 
@@ -219,6 +216,10 @@ void picoConfig()
 
   /* Initialize I2C MPU6050 */
   returnValue = initMPU6050();
+
+  /* Initialize PWM module */
+  initPWMModule();
+
   if(returnValue != 2U)
   {
     errorHandler();
