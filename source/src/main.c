@@ -82,7 +82,7 @@ void vCalculateAngles(void *pvParameters)
 
     /* Filter y */
     /* Pitch (around y) acceleration estimate m/s2 */
-    xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]) * RAD_TO_DEG;
+    xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]);
 
     /* Pitch angular speed estimate rad/s */
     xTemp_theta_dot = (xAngles.y_ang + xIMUData.gyroRaw[1U] * SAMPLE_S);
@@ -143,6 +143,8 @@ void vControlAlgorithm(void *pvParameters)
 
     xRightTmpCounts = rightCounts;
     xleftTmpCounts = leftCounts;
+
+    
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     
   }
@@ -204,8 +206,6 @@ void vISREncoderChannels(uint gpio, uint32_t event_mask)
       leftCounts--;
     }
   }
-  
-
   
 }
 
