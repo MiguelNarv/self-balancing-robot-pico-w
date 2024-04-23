@@ -82,7 +82,7 @@ void vCalculateAngles(void *pvParameters)
 
     /* Filter y */
     /* Pitch (around y) acceleration estimate m/s2 */
-    xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]) * RAD_TO_DEG;
+    xTemp_theta = atan2(-xIMUData.accelRaw[0U], xIMUData.accelRaw[2U]);
 
     /* Pitch angular speed estimate rad/s */
     xTemp_theta_dot = (xAngles.y_ang + xIMUData.gyroRaw[1U] * SAMPLE_S);
@@ -132,9 +132,10 @@ void vControlAlgorithm(void *pvParameters)
   xLastWakeTime = xTaskGetTickCount();
   for (;;)
   {
-     /* Every 10ms will wait for task */
+    /* Every 10ms will wait for task */
     xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
+    /* Estimate speed for each wheel from encoder readings */
     xSpeed.right_speed =  (2U * PI * (rightCounts - xRightTmpCounts)) / 
                         (PPR * 0.01);
 
@@ -143,8 +144,8 @@ void vControlAlgorithm(void *pvParameters)
 
     xRightTmpCounts = rightCounts;
     xleftTmpCounts = leftCounts;
-    xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     
+    xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
   }
 }
 
@@ -205,8 +206,6 @@ void vISREncoderChannels(uint gpio, uint32_t event_mask)
     }
   }
   
-
-  
 }
 
 void picoConfig()
@@ -217,6 +216,10 @@ void picoConfig()
 
   /* Initialize I2C MPU6050 */
   returnValue = initMPU6050();
+
+  /* Initialize PWM module */
+  initPWMModule();
+
   if(returnValue != 2U)
   {
     errorHandler();

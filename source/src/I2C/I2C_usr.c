@@ -18,7 +18,7 @@
 #define I2C_FREQ 100000U
 
 /* Name: initMPU6050()
- * Description: Defines module configrations and resets and wakes module.
+ * Description: Defines module configurations, resets and wakes module.
  */
 int initMPU6050()
 {

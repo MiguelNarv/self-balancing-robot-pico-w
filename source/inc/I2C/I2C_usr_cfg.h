@@ -1,5 +1,5 @@
-#ifndef _I2C_CFG_H
-#define _I2C_CFG_H
+#ifndef _I2C_USR_CFG_H
+#define _I2C_USR_CFG_H
 
 /* Public types */
 typedef struct
