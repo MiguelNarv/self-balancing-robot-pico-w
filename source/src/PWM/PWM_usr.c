@@ -1,8 +1,7 @@
 /* PWM source file
  * 
- * Specific to MPU6050, initializes the module and implements a polling function to
- * get the gyroscope and accelerometer values from it.
- * Based on pico-examples/I2C/mpu6050_i2c
+ * Specific to TB6612FNG, initializes pins and implements a function to set duties on
+ * both wheels.
  */
 
 #include "inc/PWM/PWM_usr.h"
@@ -61,6 +60,10 @@ void initPWMModule()
   pwm_init(leftSlice, &leftConfig, true);
 }
 
+/* Name: setPWM(PWM_output values)
+ * Arguments: values is a structure holding stdby and both wheels duties.
+ * Description: Sets stdby pin, wheels direction and its duty cicle.
+ */
 void setPWM(PWM_output values)
 {
   gpio_put(H_BRIGDE_STDBY_PIN, values.stdby);
@@ -89,5 +92,4 @@ void setPWM(PWM_output values)
   
   pwm_set_gpio_level(RIGHT_PWM_PIN, values.rightDuty);
   pwm_set_gpio_level(LEFT_PWM_PIN, values.leftDuty);
-  
 }
