@@ -20,6 +20,11 @@
         "cyw43_arch.h": "c",
         "tcpip_usr.h": "c",
         "tcpip_user_cfg.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "atomic": "cpp",
+        "pwm_usr.h": "c",
+        "i2c_usr.h": "c",
+        "gpio.h": "c",
+        "random": "c"
     }
 }

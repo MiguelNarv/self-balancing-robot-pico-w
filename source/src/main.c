@@ -132,18 +132,20 @@ void vControlAlgorithm(void *pvParameters)
   xLastWakeTime = xTaskGetTickCount();
   for (;;)
   {
-     /* Every 10ms will wait for task */
+    /* Every 10ms will wait for task */
     xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
+    /* Estimate speed for each wheel from encoder readings */
     xSpeed.right_speed =  (2U * PI * (rightCounts - xRightTmpCounts)) / 
                         (PPR * 0.01);
 
     xSpeed.left_speed =  (2U * PI * (leftCounts - xleftTmpCounts)) / 
                         (PPR * 0.01);
 
+    /* Duty  */
+
     xRightTmpCounts = rightCounts;
     xleftTmpCounts = leftCounts;
-
     
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     
