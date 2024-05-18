@@ -8,6 +8,6 @@ typedef struct
   uint8_t   stdby; 
   uint16_t  rightDuty;
   uint16_t  leftDuty;
-} PWM_output;
+} PWMOutput;
 
 #endif

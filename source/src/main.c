@@ -18,6 +18,7 @@ const TickType_t xPeriod_20ms = pdMS_TO_TICKS(20U);
 /* Private handlers */
 QueueHandle_t xAnglesQueueHandler;
 QueueHandle_t xSpeedQueueHandler;
+QueueHandle_t xControlQueueHandler;
 SemaphoreHandle_t xControlSemaphoreHandler;
 
 /* Function prototypes */
@@ -38,6 +39,7 @@ int main()
   /* Queues creation */
   xAnglesQueueHandler = xQueueCreate(5, sizeof(FilteredAngles));
   xSpeedQueueHandler = xQueueCreate(5, sizeof(WheelsSpeed));
+  xControlSemaphoreHandler = xQueueCreate(5, sizeof(ControlParameters));
 
   /* Semaphores creation */
 
@@ -99,6 +101,7 @@ void vTCPIPTransmitAngles(void *pvParameters)
   TickType_t xLastWakeTime;
   FilteredAngles xAngles;  
   WheelsSpeed xSpeed; 
+  ControlParameters xControl;
   char xTxBuffer[] = "";
 
   xLastWakeTime = xTaskGetTickCount();
@@ -114,9 +117,10 @@ void vTCPIPTransmitAngles(void *pvParameters)
     /* Unqueue filtered angles */
     xQueueReceive(xAnglesQueueHandler, &xAngles.y_ang, portMAX_DELAY);
     xQueueReceive(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
+    xQueueReceive(xControlSemaphoreHandler, &xControl, portMAX_DELAY);
 
     /* Format angles into a const char buffer */
-    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xSpeed.left_speed);
+    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xControl.speedReference, xControl.speedCorrection);
 
     /* Send buffer to client */
     sendTcpIp(xTxBuffer);
@@ -127,13 +131,22 @@ void vControlAlgorithm(void *pvParameters)
 {
   TickType_t xLastWakeTime;
   WheelsSpeed xSpeed; 
+  ControlParameters xControl;
+  PWMOutput xPWM;
+
+  static double tmpSpeedReference = 0.0;
   static int xRightTmpCounts, xleftTmpCounts = 0;
+  const double speedKp = 1.0, speedKi = 0.01;
 
   xLastWakeTime = xTaskGetTickCount();
   for (;;)
   {
     /* Every 10ms will wait for task */
     xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
+
+    /* Calculate temporal reference */
+    xControl.speedReference = sin(PI * tmpSpeedReference);
+    tmpSpeedReference += 0.01;
 
     /* Estimate speed for each wheel from encoder readings */
     xSpeed.right_speed =  (2U * PI * (rightCounts - xRightTmpCounts)) / 
@@ -144,8 +157,26 @@ void vControlAlgorithm(void *pvParameters)
 
     xRightTmpCounts = rightCounts;
     xleftTmpCounts = leftCounts;
+
+    /* PI for right wheel*/
+    xControl.speedCorrection = discretePID(xControl.speedReference, xSpeed.right_speed, 
+                                          speedKp, speedKi, 0);
+
+
+    xPWM.leftDuty = 0U;
+    xPWM.rightDuty = xControl.speedCorrection;
+    xPWM.stdby = 1U;
+    
+    if(xControl.speedCorrection > 1023.0)
+    {
+      xControl.speedCorrection = 1023.0;
+    }                            
+
+    /* Set the PWM */
+    setPWM(xPWM);
     
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
+    xQueueSend(xControlSemaphoreHandler, &xControl, portMAX_DELAY);
   }
 }
 
@@ -214,15 +245,22 @@ void picoConfig()
 
   stdio_init_all();
 
-  /* Initialize I2C MPU6050 */
-  returnValue = initMPU6050();
+  gpio_init(POWER_LED_PIN);
+  gpio_init(GENERAL_LED_PIN);
+  gpio_set_dir(POWER_LED_PIN, GPIO_OUT);
+  gpio_set_dir(GENERAL_LED_PIN, GPIO_OUT);
+  gpio_put(POWER_LED_PIN, 0);
+  gpio_put(GENERAL_LED_PIN, 0);
 
   /* Initialize PWM module */
   initPWMModule();
 
+  /* Initialize I2C MPU6050 */
+  returnValue = initMPU6050();
+
   if(returnValue != 2U)
   {
-    errorHandler();
+    //errorHandler();
   }
 
   /* Initialize TCPIP */
@@ -236,6 +274,9 @@ void picoConfig()
   gpio_set_irq_enabled_with_callback(RIGHT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
   gpio_set_irq_enabled_with_callback(LEFT_ENCODER_A_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
   gpio_set_irq_enabled_with_callback(LEFT_ENCODER_B_PIN, GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &vISREncoderChannels);
+
+  gpio_put(POWER_LED_PIN, 1);
+
 }
 
 void vApplicationIdleHook(void)
@@ -251,6 +292,9 @@ void errorHandler()
 {
    while (1)
   {
-    /* ToDo */
+    gpio_put(GENERAL_LED_PIN, 1);
+    sleep_ms(300);
+    gpio_put(GENERAL_LED_PIN, 0);
+    sleep_ms(300);
   };
 }

@@ -30,11 +30,23 @@ void initPWMModule()
   pwm_config rightConfig, leftConfig;
 
   /* Set pin function */
-  gpio_set_function(H_BRIGDE_STDBY_PIN, GPIO_OUT);
-  gpio_set_function(RIGHT_IN1_PIN, GPIO_OUT);
-  gpio_set_function(RIGHT_IN2_PIN, GPIO_OUT);
-  gpio_set_function(LEFT_IN1_PIN, GPIO_OUT);
-  gpio_set_function(LEFT_IN2_PIN, GPIO_OUT);
+  gpio_init(H_BRIGDE_STDBY_PIN);
+  gpio_init(RIGHT_IN1_PIN);
+  gpio_init(RIGHT_IN2_PIN);
+  gpio_init(LEFT_IN1_PIN);
+  gpio_init(LEFT_IN2_PIN);
+
+  gpio_set_dir(H_BRIGDE_STDBY_PIN, GPIO_OUT);
+  gpio_set_dir(RIGHT_IN1_PIN, GPIO_OUT);
+  gpio_set_dir(RIGHT_IN2_PIN, GPIO_OUT);
+  gpio_set_dir(LEFT_IN1_PIN, GPIO_OUT);
+  gpio_set_dir(LEFT_IN2_PIN, GPIO_OUT);
+
+  gpio_put(H_BRIGDE_STDBY_PIN, 0);
+  gpio_put(RIGHT_IN1_PIN, 0);
+  gpio_put(RIGHT_IN2_PIN, 0);
+  gpio_put(LEFT_IN1_PIN, 0);
+  gpio_put(LEFT_IN2_PIN, 0);
 
   gpio_set_function(RIGHT_PWM_PIN, GPIO_FUNC_PWM);
   gpio_set_function(LEFT_PWM_PIN, GPIO_FUNC_PWM);
@@ -60,11 +72,11 @@ void initPWMModule()
   pwm_init(leftSlice, &leftConfig, true);
 }
 
-/* Name: setPWM(PWM_output values)
+/* Name: setPWM(PWMOutput values)
  * Arguments: values is a structure holding stdby and both wheels duties.
  * Description: Sets stdby pin, wheels direction and its duty cicle.
  */
-void setPWM(PWM_output values)
+void setPWM(PWMOutput values)
 {
   gpio_put(H_BRIGDE_STDBY_PIN, values.stdby);
 
