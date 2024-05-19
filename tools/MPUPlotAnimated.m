@@ -12,28 +12,38 @@ index = 1;
 
 % Figure properties.
 f = figure;
-subplot(3,1,1);
+subplot(4,1,1);
 yAngXAxis = animatedline('Color','b');
 title('Robot measurements')
 legend('Y angle')
 xlabel('Time [s]') 
 ylabel('Angle [deg]') 
 
-subplot(3,1,2);
+subplot(4,1,2);
 rightSpeedXAxis = animatedline('Color','r');
 legend('Right wheel speed')
 xlabel('Time [s]') 
 ylabel('Speed [rad/s]') 
 
-subplot(3,1,3);
-leftSpeedXAxis = animatedline('Color','g');
-legend('left wheel speed')
+subplot(4,1,3);
+rightSpeedReference = animatedline('Color','g');
+legend('Right Wheel reference')
 xlabel('Time [s]') 
 ylabel('Speed [rad/s]') 
 
+subplot(4,1,4);
+rightControlEffortPlot = animatedline('Color','black');
+legend('Control effort')
+xlabel('Time [s]') 
+ylabel('Units')
+
+
 % Initialize recording buffers.
 recordedTime = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
-recordedYAngle = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+recordedPitchAngle = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+recordedRightSpeed = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+recordedRightSpeedReference = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
+recordedRightSpeedControlEffort = zeros(1, RECORDING_TIME/TRANSMITION_PERIOD);
 
 % Plot RECORDING_TIME of received data.
 while counter < RECORDING_TIME
@@ -44,17 +54,22 @@ while counter < RECORDING_TIME
         % Format received buffer.
         rxBuffer = strsplit(readline(t), ",");
         
-        yAng = str2double(rxBuffer{1});
+        pitchAngle = str2double(rxBuffer{1});
         rightSpeed = str2double(rxBuffer{2});
-        leftSpeed = str2double(rxBuffer{3});
+        rightReference = str2double(rxBuffer{3});
+        rightControlEffort = str2double(rxBuffer{4});
         
         % Add points.
-        addpoints(yAngXAxis,counter,yAng);
+        addpoints(yAngXAxis,counter,pitchAngle);
         addpoints(rightSpeedXAxis,counter,rightSpeed);
-        addpoints(leftSpeedXAxis,counter,leftSpeed);
+        addpoints(rightSpeedReference,counter,rightReference);
+        addpoints(rightControlEffortPlot,counter,rightControlEffort);
 
         recordedTime(index) = counter;
-        recordedYAngle(index) = yAng;
+        recordedPitchAngle(index) = pitchAngle;
+        recordedRightSpeed(index) = rightSpeed;
+        recordedRightSpeedReference(index) = rightReference;
+        recordedRightSpeedControlEffort(index) = rightControlEffort;
         
         % Update screen
         drawnow limitrate
@@ -68,7 +83,7 @@ while counter < RECORDING_TIME
 end
 %% Save recorded data
 % Save matrix in current folder as .xlsx.
-writematrix([recordedTime; recordedYAngle], "Robot_recordings.xlsx");
+writematrix([recordedTime; recordedPitchAngle; recordedRightSpeed; recordedRightSpeedReference; recordedRightSpeedControlEffort], "Robot_recordings.xlsx");
 
 %% Close TCP/IP
 % Connection with server not closed.
