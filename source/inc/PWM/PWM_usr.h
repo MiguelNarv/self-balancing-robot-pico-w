@@ -4,6 +4,6 @@
 #include "PWM_user_cfg.h"
 
 extern void initPWMModule();
-extern void setPWM(PWM_output values);
+extern void setPWM(PWMOutput values);
 
 #endif 

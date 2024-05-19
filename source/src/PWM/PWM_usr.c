@@ -6,6 +6,7 @@
 
 #include "inc/PWM/PWM_usr.h"
 #include <stdbool.h>
+#include <math.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
 
@@ -30,11 +31,23 @@ void initPWMModule()
   pwm_config rightConfig, leftConfig;
 
   /* Set pin function */
-  gpio_set_function(H_BRIGDE_STDBY_PIN, GPIO_OUT);
-  gpio_set_function(RIGHT_IN1_PIN, GPIO_OUT);
-  gpio_set_function(RIGHT_IN2_PIN, GPIO_OUT);
-  gpio_set_function(LEFT_IN1_PIN, GPIO_OUT);
-  gpio_set_function(LEFT_IN2_PIN, GPIO_OUT);
+  gpio_init(H_BRIGDE_STDBY_PIN);
+  gpio_init(RIGHT_IN1_PIN);
+  gpio_init(RIGHT_IN2_PIN);
+  gpio_init(LEFT_IN1_PIN);
+  gpio_init(LEFT_IN2_PIN);
+
+  gpio_set_dir(H_BRIGDE_STDBY_PIN, GPIO_OUT);
+  gpio_set_dir(RIGHT_IN1_PIN, GPIO_OUT);
+  gpio_set_dir(RIGHT_IN2_PIN, GPIO_OUT);
+  gpio_set_dir(LEFT_IN1_PIN, GPIO_OUT);
+  gpio_set_dir(LEFT_IN2_PIN, GPIO_OUT);
+
+  gpio_put(H_BRIGDE_STDBY_PIN, 0);
+  gpio_put(RIGHT_IN1_PIN, 0);
+  gpio_put(RIGHT_IN2_PIN, 0);
+  gpio_put(LEFT_IN1_PIN, 0);
+  gpio_put(LEFT_IN2_PIN, 0);
 
   gpio_set_function(RIGHT_PWM_PIN, GPIO_FUNC_PWM);
   gpio_set_function(LEFT_PWM_PIN, GPIO_FUNC_PWM);
@@ -60,15 +73,15 @@ void initPWMModule()
   pwm_init(leftSlice, &leftConfig, true);
 }
 
-/* Name: setPWM(PWM_output values)
+/* Name: setPWM(PWMOutput values)
  * Arguments: values is a structure holding stdby and both wheels duties.
  * Description: Sets stdby pin, wheels direction and its duty cicle.
  */
-void setPWM(PWM_output values)
+void setPWM(PWMOutput values)
 {
   gpio_put(H_BRIGDE_STDBY_PIN, values.stdby);
 
-  if(values.rightDuty < MID_DUTY_CYCLE)
+  if(values.rightDuty > 0.0)
   {
     gpio_put(RIGHT_IN1_PIN, 0U);
     gpio_put(RIGHT_IN2_PIN, 1U);
@@ -79,7 +92,7 @@ void setPWM(PWM_output values)
     gpio_put(RIGHT_IN2_PIN, 0U);
   }
 
-  if(values.leftDuty < MID_DUTY_CYCLE)
+  if(values.leftDuty > 0.0)
   {
     gpio_put(LEFT_IN1_PIN, 0U);
     gpio_put(LEFT_IN2_PIN, 1U);
@@ -90,6 +103,16 @@ void setPWM(PWM_output values)
     gpio_put(LEFT_IN2_PIN, 0U);
   }
   
-  pwm_set_gpio_level(RIGHT_PWM_PIN, values.rightDuty);
-  pwm_set_gpio_level(LEFT_PWM_PIN, values.leftDuty);
+  if(fabs(values.rightDuty) > TOP_DUTY_CYCLE)
+  {
+    values.rightDuty = TOP_DUTY_CYCLE;
+  }
+
+  if(fabs(values.leftDuty) > TOP_DUTY_CYCLE)
+  {
+    values.leftDuty = TOP_DUTY_CYCLE;
+  }
+
+  pwm_set_gpio_level(RIGHT_PWM_PIN, fabs(values.rightDuty));
+  pwm_set_gpio_level(LEFT_PWM_PIN, fabs(values.leftDuty));
 }

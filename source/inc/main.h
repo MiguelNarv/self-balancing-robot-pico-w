@@ -13,6 +13,10 @@
 #define RIGHT_ENCODER_B_PIN 19U
 #define LEFT_ENCODER_A_PIN  20U
 #define LEFT_ENCODER_B_PIN  21U
+#define POWER_LED_PIN       0U
+#define GENERAL_LED_PIN     1U
+#define POS_COMPENSATION    6.05
+
 
 #define RAD_TO_DEG          57.29577951
 #define PPR                 1632U
