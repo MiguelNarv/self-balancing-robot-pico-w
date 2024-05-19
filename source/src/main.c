@@ -136,7 +136,7 @@ void vControlAlgorithm(void *pvParameters)
 
   static double tmpSpeedReference = 0.0;
   static int xRightTmpCounts, xleftTmpCounts = 0;
-  const double speedKp = 1.0, speedKi = 0.01;
+  const double speedKp = 16.0, speedKi = 10.0;
 
   xLastWakeTime = xTaskGetTickCount();
   for (;;)
@@ -160,20 +160,20 @@ void vControlAlgorithm(void *pvParameters)
 
     /* PI for right wheel*/
     xControl.speedCorrection = discretePID(xControl.speedReference, xSpeed.right_speed, 
-                                          speedKp, speedKi, 0);
+                                          speedKp, speedKi, 0.0);
 
 
     xPWM.leftDuty = 0U;
     xPWM.rightDuty = xControl.speedCorrection;
     xPWM.stdby = 1U;
     
-    if(xControl.speedCorrection > 1023.0)
+    if(fabs(xPWM.rightDuty) < 1023.0)
     {
-      xControl.speedCorrection = 1023.0;
-    }                            
+      /* Set the PWM */
+      setPWM(xPWM);
+    }           
 
-    /* Set the PWM */
-    setPWM(xPWM);
+    
     
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     xQueueSend(xControlSemaphoreHandler, &xControl, portMAX_DELAY);
@@ -260,7 +260,7 @@ void picoConfig()
 
   if(returnValue != 2U)
   {
-    //errorHandler();
+    errorHandler();
   }
 
   /* Initialize TCPIP */

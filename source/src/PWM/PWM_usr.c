@@ -6,6 +6,7 @@
 
 #include "inc/PWM/PWM_usr.h"
 #include <stdbool.h>
+#include <math.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
 
@@ -80,7 +81,7 @@ void setPWM(PWMOutput values)
 {
   gpio_put(H_BRIGDE_STDBY_PIN, values.stdby);
 
-  if(values.rightDuty < MID_DUTY_CYCLE)
+  if(values.rightDuty > 0.0)
   {
     gpio_put(RIGHT_IN1_PIN, 0U);
     gpio_put(RIGHT_IN2_PIN, 1U);
@@ -91,7 +92,7 @@ void setPWM(PWMOutput values)
     gpio_put(RIGHT_IN2_PIN, 0U);
   }
 
-  if(values.leftDuty < MID_DUTY_CYCLE)
+  if(values.leftDuty > 0.0)
   {
     gpio_put(LEFT_IN1_PIN, 0U);
     gpio_put(LEFT_IN2_PIN, 1U);
@@ -102,6 +103,6 @@ void setPWM(PWMOutput values)
     gpio_put(LEFT_IN2_PIN, 0U);
   }
   
-  pwm_set_gpio_level(RIGHT_PWM_PIN, values.rightDuty);
-  pwm_set_gpio_level(LEFT_PWM_PIN, values.leftDuty);
+  pwm_set_gpio_level(RIGHT_PWM_PIN, fabs(values.rightDuty));
+  pwm_set_gpio_level(LEFT_PWM_PIN, fabs(values.leftDuty));
 }

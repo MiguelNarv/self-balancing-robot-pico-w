@@ -16,9 +16,9 @@
  */
 double discretePID(double r ,double y, double kp, double ki, double kd)
 {
-  static double e1 = 0.0, e2 = 0.0 , u0 = 0.0, u1 = 0.0 , u2 = 0.0; 
+  static double e1 = 0.0, e2 = 0.0, u1 = 0.0 , u2 = 0.0; 
   const double a0 = (1.0 + (N * Ts)), a1 = -(2.0 + (N * Ts)), a2 = 1.0;
-  double b0, b1, b2, ku1, ku2, ke0, ke1, ke2, e0;
+  double b0, b1, b2, ku1, ku2, ke0, ke1, ke2, e0, u0;
 
   b0 = (kp * (1.0 + (N * Ts))) + (ki * Ts * (1.0 + (N * Ts))) + (kd * N);
   b1 = -((kp * (2.0 + (N * Ts))) + (ki * Ts) + (2.0 * kd * N));
