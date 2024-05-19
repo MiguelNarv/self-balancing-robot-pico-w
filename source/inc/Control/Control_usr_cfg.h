@@ -5,8 +5,10 @@ typedef struct
 {
   double positionReference;
   double positionCorrection;
-  double speedReference;
-  double speedCorrection;
+  double rightSpeedReference;
+  double rightSpeedCorrection;
+  double leftSpeedReference;
+  double leftSpeedCorrection;
 } ControlParameters;
 
 #endif

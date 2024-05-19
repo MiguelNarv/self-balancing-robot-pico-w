@@ -120,7 +120,7 @@ void vTCPIPTransmitAngles(void *pvParameters)
     xQueueReceive(xControlSemaphoreHandler, &xControl, portMAX_DELAY);
 
     /* Format angles into a const char buffer */
-    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xControl.speedReference, xControl.speedCorrection);
+    sprintf(xTxBuffer, "%3.3f,%2.3f,%2.3f,%2.3f,%2.3f\r\n", xAngles.y_ang, xSpeed.right_speed, xControl.rightSpeedReference, xSpeed.left_speed, xControl.leftSpeedReference);
 
     /* Send buffer to client */
     sendTcpIp(xTxBuffer);
@@ -145,7 +145,8 @@ void vControlAlgorithm(void *pvParameters)
     xTaskDelayUntil(&xLastWakeTime, xPeriod_10ms);
 
     /* Calculate temporal reference */
-    xControl.speedReference = sin(PI * tmpSpeedReference);
+    xControl.rightSpeedReference = sin(PI * tmpSpeedReference);
+    xControl.leftSpeedReference = sin(PI * tmpSpeedReference);
     tmpSpeedReference += 0.01;
 
     /* Estimate speed for each wheel from encoder readings */
@@ -159,21 +160,20 @@ void vControlAlgorithm(void *pvParameters)
     xleftTmpCounts = leftCounts;
 
     /* PI for right wheel*/
-    xControl.speedCorrection = discretePID(xControl.speedReference, xSpeed.right_speed, 
+    xControl.rightSpeedCorrection = discretePID(xControl.rightSpeedReference, xSpeed.right_speed, 
+                                          speedKp, speedKi, 0.0);
+
+    /* PI for left wheel*/
+    xControl.leftSpeedCorrection = discretePID(xControl.leftSpeedReference, xSpeed.left_speed, 
                                           speedKp, speedKi, 0.0);
 
 
-    xPWM.leftDuty = 0U;
-    xPWM.rightDuty = xControl.speedCorrection;
+    xPWM.leftDuty = xControl.leftSpeedCorrection;
+    xPWM.rightDuty = xControl.rightSpeedCorrection;
     xPWM.stdby = 1U;
     
-    if(fabs(xPWM.rightDuty) < 1023.0)
-    {
-      /* Set the PWM */
-      setPWM(xPWM);
-    }           
-
-    
+    /* Set the PWM */
+    setPWM(xPWM); 
     
     xQueueSend(xSpeedQueueHandler, &xSpeed, portMAX_DELAY);
     xQueueSend(xControlSemaphoreHandler, &xControl, portMAX_DELAY);
@@ -260,7 +260,7 @@ void picoConfig()
 
   if(returnValue != 2U)
   {
-    errorHandler();
+    /* errorHandler(); */
   }
 
   /* Initialize TCPIP */

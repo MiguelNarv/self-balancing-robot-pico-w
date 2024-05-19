@@ -103,6 +103,16 @@ void setPWM(PWMOutput values)
     gpio_put(LEFT_IN2_PIN, 0U);
   }
   
+  if(fabs(values.rightDuty) > TOP_DUTY_CYCLE)
+  {
+    values.rightDuty = TOP_DUTY_CYCLE;
+  }
+
+  if(fabs(values.leftDuty) > TOP_DUTY_CYCLE)
+  {
+    values.leftDuty = TOP_DUTY_CYCLE;
+  }
+
   pwm_set_gpio_level(RIGHT_PWM_PIN, fabs(values.rightDuty));
   pwm_set_gpio_level(LEFT_PWM_PIN, fabs(values.leftDuty));
 }
